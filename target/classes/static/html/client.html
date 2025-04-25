@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanChat | 主界面</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="../css/client.css">
+</head>
+<body>
+<!-- 主容器 -->
+<div class="app-container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <!-- 用户信息 -->
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-name" id="userName">用户名</div>
+<!--            <div class="user-actions">-->
+<!--                <div class="user-action" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></div>-->
+<!--            </div>-->
+            <div class="user-actions">
+                <div class="user-action" id="themeToggle"><i class="fas fa-moon"></i></div>
+                <div class="user-action" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></div>
+            </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="">
+            </div>
+        </div>
+
+        <!-- 联系人列表 -->
+        <div class="contact-list" id="contactList">
+            <!-- 动态生成联系人 -->
+        </div>
+    </div>
+
+    <!-- 聊天区域 -->
+    <div class="chat-area">
+        <!-- 聊天头部 -->
+        <div class="chat-header">
+            <div class="chat-title" id="chatTitle">选择联系人开始聊天</div>
+            <div class="chat-actions">
+                <div class="chat-action"><i class="fas fa-phone-alt"></i></div>
+                <div class="chat-action"><i class="fas fa-video"></i></div>
+                <div class="chat-action"><i class="fas fa-ellipsis-v"></i></div>
+            </div>
+        </div>
+
+        <!-- 消息区域 -->
+        <div class="message-area" id="messageArea">
+            <!-- 动态生成消息 -->
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-area">
+            <div class="input-tools">
+                <div class="input-tool"><i class="far fa-smile"></i></div>
+                <div class="input-tool"><i class="fas fa-paperclip"></i></div>
+            </div>
+            <input type="text" class="message-input" id="messageInput" placeholder="输入消息...">
+            <button class="send-btn" id="sendBtn">发送</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/client.js"></script>
+</body>
+</html>
