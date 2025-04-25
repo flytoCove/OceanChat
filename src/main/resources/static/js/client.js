@@ -68,16 +68,33 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', checkViewport);
 
     // 初始化用户信息
-    setTimeout(() => {
-        currentUser = {
-            id: 100,
-            username: "OceanUser",
-            avatar: "O"
-        };
-        updateUserInfo();
-        renderRecentChats();
-        showWelcomeMessage();
-    }, 500);
+    fetch('/user/getUserInfo')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('获取用户信息失败');
+            }
+            return response.json();
+        })
+        .then(userData => {
+            currentUser = {
+                id: userData.id,
+                username: userData.username,
+                avatar: userData.username.charAt(1) || userData.username.charAt(0) // 使用第二个字符，如果没有则用第一个
+            };
+            updateUserInfo();
+            renderRecentChats();
+            showWelcomeMessage();
+        })
+        .catch(error => {
+            console.error('初始化用户数据错误:', error);
+            // 可以设置一个默认用户或显示错误信息
+            currentUser = {
+                id: 0,
+                username: 'Guest',
+                avatar: 'G'
+            };
+            updateUserInfo();
+        });
 
     // 事件监听器
     sendBtn.addEventListener('click', sendMessage);
@@ -318,7 +335,7 @@ function handleDocumentClick(e) {
 
 function handleLogout() {
     localStorage.removeItem('authToken');
-    window.location.href = 'login.html';
+    window.location.href = '../index.html';
 }
 
 // 右键菜单功能

@@ -96,9 +96,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         }
 
         // 保存token到本地存储
-        if (data.token) {
-            localStorage.setItem('authToken', data.token);
-        }
+
 
         //alert('登录成功！');
         // 跳转到首页

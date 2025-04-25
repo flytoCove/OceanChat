@@ -7,7 +7,11 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -41,5 +45,21 @@ public class UserService {
         session.setAttribute("user", user);
         user.setPassword("");
         return user;
+    }
+
+    public ResponseEntity<UserInfo> getUserInfo(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            log.info("session is null,user is not logged in");
+            //返回一个空对象
+            return ResponseEntity.badRequest().body(new UserInfo());
+        }
+        UserInfo user = (UserInfo) session.getAttribute("user");
+        if (user == null) {
+            log.info(" user is not logged in");
+            return ResponseEntity.badRequest().body(new UserInfo());
+        }
+        user.setPassword("");
+        return ResponseEntity.ok().body(user);
     }
 }
