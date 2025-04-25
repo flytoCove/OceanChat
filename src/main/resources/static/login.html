@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="login.css">
+    <title>OceanChat | 登录注册</title>
+
+</head>
+
+<body>
+<div class="auth-container">
+    <div class="auth-header">
+        <div class="auth-logo">OceanChat</div>
+        <div class="auth-subtitle">连接世界，畅所欲言</div>
+    </div>
+    <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">登录</div>
+        <div class="auth-tab" data-tab="register">注册</div>
+    </div>
+    <form class="auth-form" id="loginForm">
+        <div class="form-group">
+            <label for="loginUsername">用户名</label>
+            <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+            <label for="loginPassword">密码</label>
+            <input type="password" id="loginPassword" placeholder="请输入密码" required>
+        </div>
+        <button type="submit" class="auth-btn">登录</button>
+    </form>
+    <form class="auth-form" id="registerForm" style="display: none;">
+        <div class="form-group">
+            <label for="registerUsername">用户名</label>
+            <input type="text" id="registerUsername" placeholder="请输入用户名" required>
+        </div>
+        <div class="form-group">
+            <label for="registerPassword">密码</label>
+            <input type="password" id="registerPassword" placeholder="请输入密码" required>
+        </div>
+        <div class="form-group">
+            <label for="confirmPassword">确认密码</label>
+            <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+        </div>
+        <button type="submit" class="auth-btn">注册</button>
+    </form>
+    <div class="auth-footer">
+        <p>使用即表示您同意我们的 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a></p>
+    </div>
+</div>
+
+<script src="login.js"></script>
+
+</body>
+</html>

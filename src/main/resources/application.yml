@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/WebChat?characterEncoding=utf8&useSSL=false
+    username: root
+    password: '1234'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  configuration:
+    # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/**Mapper.xml
