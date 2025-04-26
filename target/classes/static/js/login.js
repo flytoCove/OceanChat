@@ -27,7 +27,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    console.log(username, password, confirmPassword);
     // 前端验证
     if (password !== confirmPassword) {
         alert('两次输入的密码不一致');
@@ -40,7 +39,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     }
 
     try {
-        const response = await fetch('/user/register', {
+        const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -78,7 +77,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
     const password = document.getElementById('loginPassword').value;
 
     try {
-        const response = await fetch('/user/login', {
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -98,8 +97,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         // 保存token到本地存储
 
 
-        //alert('登录成功！');
-        // 跳转到首页
+        // 登录成功 跳转到首页
         window.location.href = '../html/client.html';
     } catch (error) {
         console.error('登录错误:', error);

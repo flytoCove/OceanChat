@@ -38,7 +38,7 @@ public class UserService {
     public Object login(String username, String password, HttpServletRequest request) {
         UserInfo user = userInfoMapper.queryUserInfo(username);
         if(user == null || !user.getPassword().equals(password)) {
-            log.info("login failed {}", user);
+            log.debug("login failed！");
             return new UserInfo();
         }
         HttpSession session = request.getSession(true);

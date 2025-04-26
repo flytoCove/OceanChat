@@ -5,19 +5,41 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="df164c44-c8aa-4f53-a4be-ad592ac203f2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/config/db.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/FriendController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/MsgSessionController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/mapper/FriendInfoMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/mapper/MsgSessionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/model/FriendInfo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/model/MsgSession.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/model/MsgSessionItem.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/service/FriendService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/service/MsgSessionService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../mapper/FriendMapper.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../mapper/MsgSessionMapper.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../test/java/com/fly/webchat/mapper/FriendInfoMapperTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../test/java/com/fly/webchat/mapper/MsgSessionMapperTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../java/com/fly/webchat/mapper/UserInfoMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/mapper/UserInfoMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../java/com/fly/webchat/model/UserInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/model/UserInfo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../java/com/fly/webchat/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/client.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/client.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/login.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/login.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/client.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/login.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/login.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/application.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/controller/UserController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/controller/UserController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/mapper/UserInfoMapper.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/mapper/UserInfoMapper.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/UserInfo.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/UserInfo.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/UserService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/UserService.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/css/client.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/css/client.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/html/client.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/html/client.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/html/login.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/css/login.css" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/css/login.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/js/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/js/client.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/js/login.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/static/js/login.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/WebChatApplicationTests.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/service/UserServiceTest.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,7 +106,8 @@
       <option name="presentableId" value="Default" />
       <updated>1743143942262</updated>
       <workItem from="1745562976740" duration="11674000" />
-      <workItem from="1745586290268" duration="12994000" />
+      <workItem from="1745586290268" duration="13417000" />
+      <workItem from="1745640501067" duration="26257000" />
     </task>
     <servers />
   </component>

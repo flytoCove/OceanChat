@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface UserInfoMapper {
-    @Options(useGeneratedKeys = true,keyProperty = "id")
+    @Options(useGeneratedKeys = true,keyProperty = "userId")
     @Insert("INSERT INTO user_info(`username`,`password`) " +
             "values(#{username},#{password});")
     Integer insertUserInfo(UserInfo userInfo);

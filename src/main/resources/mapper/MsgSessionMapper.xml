@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fly.webchat.mapper.MsgSessionMapper">
+
+
+    <insert id="addSession" useGeneratedKeys="true" keyProperty="sessionId">
+        insert into msg_session values (null,now())
+    </insert>
+
+    <insert id="addSessionItem">
+        insert into msg_session_user values (#{sessionId},#{userId})
+    </insert>
+
+    <select id="getSessionsIdByUserId" resultType="Integer">
+        select sessionId from msg_session where sessionId in
+        (select sessionId from msg_session_user WHERE userId = #{userId})
+        order by lastTime desc
+    </select>
+
+    <select id="getFriendListBySessionId" resultType="com.fly.webchat.model.FriendInfo">
+        select userId as friendId,username as friendName from user_info where userId in
+        (SELECT userId from msg_session_user
+        where sessionId = #{sessionId} and userId !=#{selfUserId})
+    </select>
+    <select id="querySessionIsExists" resultType="java.lang.Integer">
+        select sessionId  from msg_session_user where userId = #{toUserId}
+    </select>
+
+</mapper>

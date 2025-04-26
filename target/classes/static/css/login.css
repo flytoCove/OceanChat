@@ -1,8 +1,8 @@
 :root {
     /* 调整主色系为更柔和的浅色调 */
-    --primary-color: #6D8AEC;  
+    --primary-color: #6D8AEC;
     --secondary-color: #7B68EE;
-    --accent-color: #9B59B6;    
+    --accent-color: #9B59B6;
     --primary-light: #4895ef;
     --text-color: #2b2d42;
     --text-light: #8d99ae;

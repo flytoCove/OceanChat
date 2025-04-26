@@ -594,3 +594,99 @@ body {
     font-size: 14px;
     color: var(--text-color);
 }
+
+/* 添加在CSS文件的动画部分 */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* 视图切换动画 */
+.view-transition {
+    transition: all 0.3s ease-in-out;
+}
+
+/* 联系人列表项动画 */
+.contact-item {
+    transition: all 0.3s ease;
+    animation: fadeIn 0.3s forwards;
+}
+
+/* 消息区域动画 */
+.message-area {
+    animation: fadeIn 0.3s forwards;
+}
+
+
+/* 空状态提示动画 */
+.empty-message {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 空状态容器 */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60%;
+    text-align: center;
+    padding: 20px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 空状态图标 */
+.empty-icon {
+    font-size: 48px;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+/* 空状态标题 */
+.empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+/* 空状态描述 */
+.empty-description {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    max-width: 300px;
+}
+
+/* 空状态按钮 */
+.empty-action {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.empty-action:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+}

@@ -1,134 +1,82 @@
-// 全局变量
+// ===== 全局变量 =====
 let currentUser = null;
-let contacts = [
-    { id: 1, name: "张海洋", avatar: "海", lastMsg: "项目提案我已经看过了", time: "10:30", online: true, pinned: false },
-    { id: 2, name: "李星辰", avatar: "星", lastMsg: "设计稿需要再调整一下", time: "昨天", online: false, pinned: false },
-    { id: 3, name: "王晨曦", avatar: "晨", lastMsg: "会议安排在下午3点", time: "星期一", online: true, pinned: false },
-    { id: 4, name: "赵天宇", avatar: "天", lastMsg: "预算已经审批通过", time: "2023/05/10", online: true, pinned: false },
-    { id: 5, name: "钱雨桐", avatar: "雨", lastMsg: "客户反馈很积极", time: "2023/05/08", online: false, pinned: false },
-    { id: 6, name: "钱雨桐", avatar: "雨", lastMsg: "客户反馈很积极", time: "2023/05/08", online: false, pinned: false },
-    { id: 7, name: "钱雨桐", avatar: "雨", lastMsg: "客户反馈很积极", time: "2023/05/08", online: false, pinned: false },
-    { id: 8, name: "钱雨桐", avatar: "雨", lastMsg: "客户反馈很积极", time: "2023/05/08", online: false, pinned: false }
-];
-
-let messages = {
-    1: [
-        { sender: "张海洋", content: "项目提案我已经看过了，有几个建议", time: "10:30", self: false },
-        { sender: "我", content: "好的，您有什么建议？", time: "10:32", self: true },
-        { sender: "张海洋", content: "主要是预算部分需要更详细一些", time: "10:33", self: false }
-    ],
-    2: [
-        { sender: "李星辰", content: "设计稿需要再调整一下", time: "09:15", self: false },
-        { sender: "我", content: "具体是哪些部分需要调整？", time: "09:20", self: true }
-    ],
-    3: [
-        { sender: "王晨曦", content: "会议安排在下午3点，可以吗？", time: "星期一", self: false },
-        { sender: "我", content: "没问题，我会准时参加", time: "星期一", self: true }
-    ],
-    4: [
-        { sender: "赵天宇", content: "预算已经审批通过", time: "2023/05/10", self: false },
-        { sender: "我", content: "太好了，我们可以开始实施了", time: "2023/05/10", self: true }
-    ],
-    5: [
-        { sender: "钱雨桐", content: "客户反馈很积极，他们很喜欢新设计", time: "2023/05/08", self: false },
-        { sender: "我", content: "这是团队共同努力的结果", time: "2023/05/08", self: true }
-    ]
-};
-
+let contacts = [];
+let messages = {};
 let currentChatId = null;
 let isMobileView = window.innerWidth <= 768;
 
-// DOM元素
-const userAvatar = document.getElementById('userAvatar');
-const userName = document.getElementById('userName');
-const contactList = document.getElementById('contactList');
-const chatTitle = document.getElementById('chatTitle');
-const messageArea = document.getElementById('messageArea');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const searchInput = document.getElementById('searchInput');
-const searchBox = document.querySelector('.search-box');
-const logoutBtn = document.getElementById('logoutBtn');
-const themeToggle = document.getElementById('themeToggle');
-
-// 右键菜单元素
-const contextMenu = document.getElementById('contextMenu');
-const contextPin = document.getElementById('contextPin');
-const contextClear = document.getElementById('contextClear');
-const contextDelete = document.getElementById('contextDelete');
+// ===== DOM元素 =====
+const DOM = {
+    userAvatar: document.getElementById('userAvatar'),
+    userName: document.getElementById('userName'),
+    contactList: document.getElementById('contactList'),
+    chatTitle: document.getElementById('chatTitle'),
+    messageArea: document.getElementById('messageArea'),
+    messageInput: document.getElementById('messageInput'),
+    sendBtn: document.getElementById('sendBtn'),
+    searchInput: document.getElementById('searchInput'),
+    searchBox: document.querySelector('.search-box'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    themeToggle: document.getElementById('themeToggle'),
+    contextMenu: document.getElementById('contextMenu'),
+    contextPin: document.getElementById('contextPin'),
+    contextClear: document.getElementById('contextClear'),
+    contextDelete: document.getElementById('contextDelete'),
+    showMessagesBtn: document.getElementById('showMessages'),
+    showContactsBtn: document.getElementById('showContacts')
+};
 let currentContextContactId = null;
 
-// 切换按钮元素
-const showMessagesBtn = document.getElementById('showMessages');
-const showContactsBtn = document.getElementById('showContacts');
+// ===== 页面初始化 =====
+document.addEventListener('DOMContentLoaded', initApp);
 
-// 页面初始化
-document.addEventListener('DOMContentLoaded', function() {
+async function initApp() {
     checkViewport();
     window.addEventListener('resize', checkViewport);
+    bindEventListeners();
 
-    // 初始化用户信息
-    fetch('/user/getUserInfo')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('获取用户信息失败');
-            }
-            return response.json();
-        })
-        .then(userData => {
-            currentUser = {
-                id: userData.id,
-                username: userData.username,
-                avatar: userData.username.charAt(1) || userData.username.charAt(0) // 使用第二个字符，如果没有则用第一个
-            };
-            updateUserInfo();
-            renderRecentChats();
-            showWelcomeMessage();
-        })
-        .catch(error => {
-            console.error('初始化用户数据错误:', error);
-            // 可以设置一个默认用户或显示错误信息
-            currentUser = {
-                id: 0,
-                username: 'Guest',
-                avatar: 'G'
-            };
-            updateUserInfo();
-        });
+    try {
+        const [userRes, sessionRes, friendRes] = await Promise.all([
+            fetch('/api/userInfo'),
+            fetch('/api/MsgSessionList'),
+            fetch('/api/friendList')
+        ]);
 
-    // 事件监听器
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') sendMessage();
-    });
+        const userData = await userRes.json();
+        const sessionsData = await sessionRes.json();
+        const friendsData = await friendRes.json();
 
-    searchInput.addEventListener('input', searchContacts);
-    searchBox.addEventListener('click', handleSearchBoxClick);
-    document.addEventListener('click', handleDocumentClick);
-    logoutBtn.addEventListener('click', handleLogout);
+        currentUser = {
+            id: userData.id,
+            username: userData.username,
+            avatar: userData.username.charAt(0)
+        };
+        updateUserInfo();
 
-    // 导航切换
-    showMessagesBtn.addEventListener('click', function() {
-        this.classList.add('active');
-        showContactsBtn.classList.remove('active');
+        contacts = friendsData.map(friend => ({
+            id: friend.friendId,
+            name: friend.friendName,
+            avatar: friend.friendName.charAt(0),
+            lastMsg: "新联系人",
+            time: getCurrentTime(),
+            pinned: false
+        }));
+
+        processSessionsData(sessionsData);
         renderRecentChats();
-    });
+        showWelcomeMessage();
+    } catch (error) {
+        console.error('初始化数据失败:', error);
+        fallbackGuestUser();
+    }
+}
 
-    showContactsBtn.addEventListener('click', function() {
-        this.classList.add('active');
-        showMessagesBtn.classList.remove('active');
-        renderContactList();
-    });
+// ===== 功能函数 =====
+function fallbackGuestUser() {
+    currentUser = { id: 0, username: 'Guest', avatar: 'G' };
+    updateUserInfo();
+}
 
-    // 右键菜单
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('click', hideContextMenu);
-    contextPin.addEventListener('click', pinContact);
-    contextClear.addEventListener('click', clearChatHistory);
-    contextDelete.addEventListener('click', removeFromRecent);
-});
-
-// 功能函数
 function checkViewport() {
     isMobileView = window.innerWidth <= 768;
     updateMobileView();
@@ -136,18 +84,18 @@ function checkViewport() {
 
 function updateMobileView() {
     if (isMobileView) {
-        searchInput.style.display = 'none';
-        searchBox.classList.remove('expanded');
+        DOM.searchInput.style.display = 'none';
+        DOM.searchBox.classList.remove('expanded');
     } else {
-        searchInput.style.display = 'block';
+        DOM.searchInput.style.display = 'block';
     }
     renderContactList();
 }
 
 function updateUserInfo() {
     if (currentUser) {
-        userAvatar.textContent = currentUser.avatar;
-        userName.textContent = currentUser.username;
+        DOM.userAvatar.textContent = currentUser.avatar;
+        DOM.userName.textContent = currentUser.username;
     }
 }
 
@@ -166,73 +114,111 @@ function showWelcomeMessage() {
             </div>
         </div>
     `;
-    messageArea.appendChild(welcomeDiv);
+    DOM.messageArea.appendChild(welcomeDiv);
 }
 
-function renderContactList(contactsToRender = contacts) {
-    contactList.innerHTML = '';
+function renderContactList(list = contacts) {
+    DOM.contactList.innerHTML = '';
+    if (list.length === 0) {
+        renderEmptyState();
+        return;
+    }
 
-    // 先显示置顶联系人
-    const pinnedContacts = contactsToRender.filter(c => c.pinned);
-    const normalContacts = contactsToRender.filter(c => !c.pinned);
+    const pinned = list.filter(c => c.pinned);
+    const normal = list.filter(c => !c.pinned);
+    [...pinned, ...normal].forEach(renderContactItem);
+}
 
-    pinnedContacts.forEach(renderContactItem);
-    normalContacts.forEach(renderContactItem);
+function renderEmptyState() {
+    const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+    emptyState.innerHTML = `
+        <div class="empty-icon">
+            <i class="fas ${isMessagesView ? 'fa-comment-alt' : 'fa-user-friends'}"></i>
+        </div>
+        <h3 class="empty-title">${isMessagesView ? '没有最近聊天' : '没有联系人'}</h3>
+        <p class="empty-description">
+            ${isMessagesView ? '开始与联系人聊天，对话将显示在这里' : '添加联系人开始聊天或等待好友请求'}
+        </p>
+        ${!isMessagesView ? '<button class="empty-action" id="addContactBtn">添加联系人</button>' : ''}
+    `;
+    DOM.contactList.appendChild(emptyState);
+
+    if (!isMessagesView) {
+        document.getElementById('addContactBtn').addEventListener('click', () => alert('打开添加联系人界面'));
+    }
 }
 
 function renderContactItem(contact) {
-    const contactItem = document.createElement('div');
-    contactItem.className = `contact-item ${contact.pinned ? 'pinned' : ''}`;
-    contactItem.dataset.id = contact.id;
-
-    const contactInfo = isMobileView ? '' : `
-        <div class="contact-info">
+    const item = document.createElement('div');
+    item.className = `contact-item ${contact.pinned ? 'pinned' : ''}`;
+    item.dataset.id = contact.id;
+    item.innerHTML = `
+        <div class="contact-avatar">${contact.avatar}</div>
+        ${!isMobileView ? `<div class="contact-info">
             <div class="contact-name">${contact.name}</div>
             <div class="contact-last-msg">${contact.lastMsg}</div>
         </div>
-        <div class="contact-time">${contact.time}</div>
-    `;
-
-    contactItem.innerHTML = `
-        <div class="contact-avatar">${contact.avatar}</div>
-        ${contactInfo}
+        <div class="contact-time">${contact.time}</div>` : ''}
         ${contact.pinned ? '<i class="fas fa-thumbtack pinned-icon"></i>' : ''}
     `;
-
-    contactItem.addEventListener('click', () => openChat(contact.id));
-    contactList.appendChild(contactItem);
+    item.addEventListener('click', () => openChat(contact.id));
+    DOM.contactList.appendChild(item);
 }
 
 function renderRecentChats() {
-    const recentContacts = contacts.filter(contact =>
-        messages[contact.id] && messages[contact.id].length > 0
-    );
-    renderContactList(recentContacts);
+    const recents = contacts.filter(c => messages[c.id]?.length);
+    recents.sort((a, b) => new Date(messages[b.id].slice(-1)[0].time) - new Date(messages[a.id].slice(-1)[0].time));
+
+    DOM.contactList.style.opacity = 0;
+    setTimeout(() => {
+        renderContactList(recents);
+        DOM.contactList.style.opacity = 1;
+    }, 100);
 }
 
 function openChat(contactId) {
-    currentChatId = contactId;
-    document.querySelectorAll('.contact-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.id == contactId) item.classList.add('active');
-    });
+    document.querySelector('.app-container').classList.add('view-transition');
+    DOM.showMessagesBtn.classList.add('active');
+    DOM.showContactsBtn.classList.remove('active');
 
-    const contact = contacts.find(c => c.id == contactId);
-    if (contact) chatTitle.textContent = isMobileView ? contact.name : `${contact.name}`;
+    currentChatId = contactId;
+    highlightCurrentContact();
+    updateChatTitle(contactId);
+
+    if (!messages[contactId]) {
+        messages[contactId] = [{ sender: contacts.find(c => c.id == contactId).name, content: '开始新的对话', time: getCurrentTime(), self: false }];
+    }
+
+    renderRecentChats();
     renderMessages(contactId);
+
+    setTimeout(() => document.querySelector('.app-container').classList.remove('view-transition'), 300);
+}
+
+function highlightCurrentContact() {
+    document.querySelectorAll('.contact-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.id == currentChatId);
+    });
+}
+
+function updateChatTitle(contactId) {
+    const contact = contacts.find(c => c.id == contactId);
+    if (contact) {
+        DOM.chatTitle.textContent = contact.name;
+    }
 }
 
 function renderMessages(contactId) {
-    messageArea.innerHTML = '';
-    const chatMessages = messages[contactId] || [];
+    DOM.messageArea.innerHTML = '';
+    DOM.messageArea.style.opacity = 0;
 
-    chatMessages.forEach((msg, index) => {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${msg.self ? 'message-self' : ''}`;
-        messageDiv.style.opacity = '0';
-        messageDiv.style.animation = `fadeInUp 0.3s forwards`;
-        messageDiv.style.animationDelay = `${index * 0.1}s`;
-        messageDiv.innerHTML = `
+    (messages[contactId] || []).forEach((msg, idx) => {
+        const div = document.createElement('div');
+        div.className = `message ${msg.self ? 'message-self' : ''}`;
+        div.style.setProperty('--delay', idx);
+        div.innerHTML = `
             <div class="message-avatar">${msg.sender.charAt(0)}</div>
             <div class="message-content">
                 <div class="message-info">
@@ -242,94 +228,137 @@ function renderMessages(contactId) {
                 <div class="message-text">${msg.content}</div>
             </div>
         `;
-        messageArea.appendChild(messageDiv);
+        DOM.messageArea.appendChild(div);
     });
 
-    messageArea.scrollTop = messageArea.scrollHeight;
+    setTimeout(() => {
+        DOM.messageArea.style.opacity = 1;
+        DOM.messageArea.scrollTop = DOM.messageArea.scrollHeight;
+    }, 10);
 }
 
 function sendMessage() {
-    const content = messageInput.value.trim();
+    const content = DOM.messageInput.value.trim();
     if (!content || !currentChatId) return;
 
-    const newMessage = {
-        sender: "我",
-        content,
-        time: getCurrentTime(),
-        self: true
-    };
+    const now = getCurrentTime();
+    const contact = contacts.find(c => c.id == currentChatId);
 
-    if (!messages[currentChatId]) messages[currentChatId] = [];
-    messages[currentChatId].push(newMessage);
+    messages[currentChatId] = messages[currentChatId] || [];
+    messages[currentChatId].push({ sender: currentUser.username, content, time: now, self: true });
+
+    contact.lastMsg = content;
+    contact.time = now;
+
+    moveContactToTop(contact.id);
+    updateSingleContactItem(contact);
 
     renderMessages(currentChatId);
-    messageInput.value = '';
+    DOM.messageInput.value = '';
 
-    setTimeout(() => {
-        const contact = contacts.find(c => c.id == currentChatId);
-        if (contact) {
-            const replyMessage = {
-                sender: contact.name,
-                content: getRandomReply(),
-                time: getCurrentTime(),
-                self: false
-            };
-            messages[currentChatId].push(replyMessage);
-            renderMessages(currentChatId);
+    setTimeout(() => simulateReply(contact), 1000 + Math.random() * 2000);
+}
 
-            // 更新联系人列表
-            contact.lastMsg = replyMessage.content;
-            contact.time = replyMessage.time;
-            renderContactList();
+function simulateReply(contact) {
+    const replyTime = getCurrentTime();
+    const replyContent = getRandomText('reply');
+
+    messages[currentChatId].push({ sender: contact.name, content: replyContent, time: replyTime, self: false });
+
+    contact.lastMsg = replyContent;
+    contact.time = replyTime;
+
+    moveContactToTop(contact.id);
+    updateSingleContactItem(contact);
+
+    renderMessages(currentChatId);
+}
+
+function moveContactToTop(id) {
+    const idx = contacts.findIndex(c => c.id == id);
+    if (idx > -1) {
+        const [contact] = contacts.splice(idx, 1);
+        contacts.unshift(contact);
+    }
+}
+
+function updateSingleContactItem(contact) {
+    const item = document.querySelector(`.contact-item[data-id="${contact.id}"]`);
+    if (!item || isMobileView) return;
+
+    item.querySelector('.contact-name').textContent = contact.name;
+    item.querySelector('.contact-last-msg').textContent = contact.lastMsg;
+    item.querySelector('.contact-time').textContent = contact.time;
+
+    if (contact.pinned) {
+        item.classList.add('pinned');
+        if (!item.querySelector('.pinned-icon')) {
+            item.innerHTML += '<i class="fas fa-thumbtack pinned-icon"></i>';
         }
-    }, 1000 + Math.random() * 2000);
+    } else {
+        item.classList.remove('pinned');
+        const icon = item.querySelector('.pinned-icon');
+        if (icon) icon.remove();
+    }
 }
 
 function getCurrentTime() {
     const now = new Date();
-    return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function getRandomReply() {
-    const replies = [
-        "好的，我知道了",
-        "谢谢你的消息",
-        "我明白了",
-        "这个主意不错",
-        "我们稍后再讨论",
-        "我需要考虑一下",
-        "听起来很有趣",
-        "我同意你的看法",
-        "让我们明天再谈",
-        "祝你今天愉快"
-    ];
-    return replies[Math.floor(Math.random() * replies.length)];
+function getRandomText(type = 'reply') {
+    const texts = {
+        reply: ["好的，我知道了", "谢谢你的消息", "明白了", "这个主意不错", "稍后讨论", "我考虑一下", "听起来不错", "我同意", "明天再聊", "祝好"],
+        message: ["你好！", "最近怎么样？", "聊聊天？", "项目如何？", "周末计划？", "查收邮件", "见面时间？", "感谢帮助", "好主意", "愉快的一天"]
+    };
+    const arr = texts[type] || texts.reply;
+    return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// 搜索功能
+function processSessionsData(sessionsData) {
+    sessionsData.forEach(session => {
+        const friend = session.friendList[0];
+        const id = friend.friendId;
+
+        messages[id] = messages[id] || [];
+        messages[id].push({ sender: friend.friendName, content: session.lastMsg, time: getCurrentTime(), self: false });
+
+        const contact = contacts.find(c => c.id == id);
+        if (contact) {
+            contact.lastMsg = session.lastMsg;
+            contact.time = getCurrentTime();
+        }
+    });
+}
+
+function bindEventListeners() {
+    DOM.sendBtn.addEventListener('click', sendMessage);
+    DOM.messageInput.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
+    DOM.searchInput.addEventListener('input', searchContacts);
+    DOM.searchBox.addEventListener('click', expandSearchBox);
+    DOM.logoutBtn.addEventListener('click', handleLogout);
+    DOM.showMessagesBtn.addEventListener('click', () => { switchTab('messages'); });
+    DOM.showContactsBtn.addEventListener('click', () => { switchTab('contacts'); });
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('click', hideContextMenu);
+
+    DOM.contextPin.addEventListener('click', pinContact);
+    DOM.contextClear.addEventListener('click', clearChatHistory);
+    DOM.contextDelete.addEventListener('click', removeFromRecent);
+}
+
 function searchContacts() {
-    const searchTerm = this.value.toLowerCase();
-    const filteredContacts = contacts.filter(contact =>
-        contact.name.toLowerCase().includes(searchTerm) ||
-        contact.lastMsg.toLowerCase().includes(searchTerm)
-    );
-    renderContactList(filteredContacts);
+    const term = this.value.toLowerCase();
+    const filtered = contacts.filter(c => c.name.toLowerCase().includes(term) || c.lastMsg.toLowerCase().includes(term));
+    renderContactList(filtered);
 }
 
-function handleSearchBoxClick() {
+function expandSearchBox() {
     if (isMobileView) {
-        this.classList.add('expanded');
-        searchInput.style.display = 'block';
-        searchInput.focus();
-    }
-}
-
-function handleDocumentClick(e) {
-    if (isMobileView && !searchBox.contains(e.target) && searchBox.classList.contains('expanded')) {
-        searchBox.classList.remove('expanded');
-        searchInput.style.display = 'none';
-        searchInput.value = '';
-        renderContactList();
+        DOM.searchBox.classList.add('expanded');
+        DOM.searchInput.style.display = 'block';
+        DOM.searchInput.focus();
     }
 }
 
@@ -338,42 +367,38 @@ function handleLogout() {
     window.location.href = '../index.html';
 }
 
-// 右键菜单功能
-function handleContextMenu(e) {
-    const contactItem = e.target.closest('.contact-item');
-    if (contactItem) {
-        e.preventDefault();
-        showContextMenu(e.clientX, e.clientY, contactItem.dataset.id);
+function switchTab(tab) {
+    if (tab === 'messages') {
+        DOM.showMessagesBtn.classList.add('active');
+        DOM.showContactsBtn.classList.remove('active');
+        renderRecentChats();
+    } else {
+        DOM.showContactsBtn.classList.add('active');
+        DOM.showMessagesBtn.classList.remove('active');
+        renderContactList();
     }
 }
 
-function showContextMenu(x, y, contactId) {
-    currentContextContactId = contactId;
-    const contact = contacts.find(c => c.id == contactId);
+function handleContextMenu(e) {
+    const item = e.target.closest('.contact-item');
+    if (!item) return;
 
-    // 更新菜单项状态
-    contextPin.innerHTML = `
-        <i class="fas fa-thumbtack"></i>
-        <span>${contact.pinned ? '取消置顶' : '置顶联系人'}</span>
-    `;
+    e.preventDefault();
+    showContextMenu(e.clientX, e.clientY, item.dataset.id);
+}
 
-    // 定位菜单
-    contextMenu.style.top = `${y}px`;
-    contextMenu.style.left = `${x}px`;
-    contextMenu.style.display = 'block';
+function showContextMenu(x, y, id) {
+    currentContextContactId = id;
+    const contact = contacts.find(c => c.id == id);
 
-    // 确保菜单在可视区域内
-    const rect = contextMenu.getBoundingClientRect();
-    if (rect.bottom > window.innerHeight) {
-        contextMenu.style.top = `${window.innerHeight - rect.height - 5}px`;
-    }
-    if (rect.right > window.innerWidth) {
-        contextMenu.style.left = `${window.innerWidth - rect.width - 5}px`;
-    }
+    DOM.contextPin.innerHTML = `<i class="fas fa-thumbtack"></i> <span>${contact.pinned ? '取消置顶' : '置顶联系人'}</span>`;
+    DOM.contextMenu.style.top = `${y}px`;
+    DOM.contextMenu.style.left = `${x}px`;
+    DOM.contextMenu.style.display = 'block';
 }
 
 function hideContextMenu() {
-    contextMenu.style.display = 'none';
+    DOM.contextMenu.style.display = 'none';
 }
 
 function pinContact() {
@@ -386,22 +411,20 @@ function pinContact() {
 }
 
 function clearChatHistory() {
-    if (confirm('确定要清空与这个联系人的所有聊天记录吗？')) {
-        if (messages[currentContextContactId]) {
-            delete messages[currentContextContactId];
-            if (currentChatId == currentContextContactId) {
-                messageArea.innerHTML = '';
-                chatTitle.textContent = '选择联系人开始聊天';
-            }
-            renderRecentChats();
+    if (confirm('确定要清空与该联系人的聊天记录吗？')) {
+        delete messages[currentContextContactId];
+        if (currentChatId == currentContextContactId) {
+            DOM.messageArea.innerHTML = '';
+            DOM.chatTitle.textContent = '选择联系人开始聊天';
         }
+        renderRecentChats();
     }
     hideContextMenu();
 }
 
 function removeFromRecent() {
-    if (showMessagesBtn.classList.contains('active')) {
-        if (confirm('确定要从最近聊天中移除这个联系人吗？')) {
+    if (DOM.showMessagesBtn.classList.contains('active')) {
+        if (confirm('确定要从最近聊天中移除？')) {
             delete messages[currentContextContactId];
             renderRecentChats();
         }
