@@ -81,13 +81,12 @@ public class MsgSessionService {
                     .body(Map.of("success", false, "message", "fail : username not logged in"));
         }
 
-        Integer ret = msgSessionMapper.querySessionIsExists(toUserId);
-        log.info("query session id is {}", ret);
-        if(ret != null){
-            log.info("session already exists");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", "fail : session already exists"));
-        }
+//        Integer ret = msgSessionMapper.querySessionIsExists(toUserId);
+//        if(ret != null){
+//            log.info("session already exists");
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(Map.of("success", false, "message", "fail : session already exists"));
+//        }
 
         // 1.msg_session 中插入数据
         MsgSession msgSession = new MsgSession();
@@ -108,7 +107,31 @@ public class MsgSessionService {
                 .body(Map.of("sessionId",msgSession.getSessionId()));
     }
 
-//    public ResponseEntity<Integer> deleteMsgSession(MsgSession msgSession){
-//
-//    }
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<Map<String,Object>> deleteMsgSession(Integer sessionId,HttpServletRequest request){
+        HttpSession session = request.getSession();
+        if(session == null){
+            log.info("user not logged in");
+            return ResponseEntity.badRequest().body(Map.of("fail", "user not logged in"));
+        }
+
+        UserInfo user = (UserInfo) session.getAttribute("user");
+        if(user == null){
+            log.info("user not logged in");
+            return ResponseEntity.badRequest().body(Map.of("fail", "user not logged in"));
+
+        }
+        // 1.删除会话
+         Integer ret1 = msgSessionMapper.deleteSession(sessionId);
+         if(ret1 == 0){
+             return ResponseEntity.ok().body(Map.of("success", false, "data", ret1));
+         }
+        // 2.删除会话中的记录
+         Integer ret2 = msgSessionMapper.deleteSessionItem(sessionId);
+         if(ret2 == 0){
+             return ResponseEntity.ok().body(Map.of("success", false, "data", ret2));
+         }
+
+        return ResponseEntity.ok().body(Map.of("success", true, "data", ret1));
+    }
 }

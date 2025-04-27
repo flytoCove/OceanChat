@@ -2,5 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.fly.webchat.mapper.UserInfoMapper">
+    <insert id="addFriend">
+        INSERT INTO friend_info values (#{userId},#{friendId})
+    </insert>
+
+    <select id="searchUserByUserName" resultType="com.fly.webchat.model.UserInfo">
+        select userId,username from user_info where username = #{username}
+    </select>
 
 </mapper>

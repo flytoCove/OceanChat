@@ -28,9 +28,20 @@ public class MsgSessionController {
 
     @RequestMapping("/addMsgSession")
     // @SessionAttribute("user") UserInfo user
-    public ResponseEntity<Map<String,Object>> addMsgSession(@RequestBody Integer toUserId, HttpServletRequest request){
+    public ResponseEntity<Map<String,Object>> addMsgSession(@RequestBody Map<String,Integer> map, HttpServletRequest request){
         //toUserId表示将哪个好友和当前登录的用户添加到一个会话列表
-        log.info("toUserId = {}",toUserId);
-        return msgSessionService.addMsgSession(toUserId, request);
+        try{
+            Integer toUserId = map.get("friendId");
+            return msgSessionService.addMsgSession(toUserId, request);
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+    @RequestMapping("/deleteMsgSession")
+    public ResponseEntity<Map<String,Object>> deleteMsgSession(@RequestBody Map<String,Integer> map, HttpServletRequest request){
+        log.info("deleteMsgSession,map = {}",map.toString());
+        log.info(map.toString());
+        Integer sessionId = map.get("currentSessionId");
+        return msgSessionService.deleteMsgSession(sessionId,request);
     }
 }

@@ -17,11 +17,11 @@ const DOM = {
     searchInput: document.getElementById('searchInput'),
     searchBox: document.querySelector('.search-box'),
     logoutBtn: document.getElementById('logoutBtn'),
+    addUserBtn: document.getElementById('addUser'),
     themeToggle: document.getElementById('themeToggle'),
     contextMenu: document.getElementById('contextMenu'),
     contextPin: document.getElementById('contextPin'),
     contextClear: document.getElementById('contextClear'),
-    contextDelete: document.getElementById('contextDelete'),
     showMessagesBtn: document.getElementById('showMessages'),
     showContactsBtn: document.getElementById('showContacts')
 };
@@ -36,17 +36,16 @@ async function initApp() {
     bindEventListeners();
 
     try {
-        const [userRes, sessionRes, friendRes,addMsgSessionRes] = await Promise.all([
+        const [userRes, sessionRes, friendRes] = await Promise.all([
             fetch('/api/userInfo'),
             fetch('/api/MsgSessionList'),
-            fetch('/api/friendList'),
-            fetch('/api/addMsgSession')
+            fetch('/api/friendList')
         ]);
 
         const userData = await userRes.json();
         const sessionsData = await sessionRes.json();
         const friendsData = await friendRes.json();
-        const MsgSession = await addMsgSessionRes.json();
+
         // 处理当前登录用户信息
         currentUser = {
             id: userData.id,
@@ -68,8 +67,6 @@ async function initApp() {
         // 处理消息会话数据
         processSessionsData(sessionsData);
 
-
-
         // 渲染最近聊天列表
         renderRecentChats();
 
@@ -83,6 +80,26 @@ async function initApp() {
 }
 
 // ======= 功能函数 =======
+/**
+ * 显示顶部浮动提示消息
+ * @param {string} text - 提示文本
+ * @param {'success'|'error'} type - 成功或失败
+ */
+function showToast(text, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    toast.textContent = text;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
 
 //  ==== 用户相关函数 ====
 /**
@@ -175,24 +192,40 @@ function renderContactList(list = contacts) {
 /**
  * 渲染空状态 - 当联系人列表或消息列表为空时显示
  */
-function renderEmptyState() {
+/**
+ * 渲染空状态 - 当联系人列表或消息列表为空时显示
+ * @param {boolean} isSearch - 是否是搜索结果
+ * @param {string} customMessage - 自定义消息
+ */
+function renderEmptyState(isSearch = false, customMessage = '') {
     const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
     const emptyState = document.createElement('div');
     emptyState.className = 'empty-state';
-    emptyState.innerHTML = `
-        <div class="empty-icon">
-            <i class="fas ${isMessagesView ? 'fa-comment-alt' : 'fa-user-friends'}"></i>
-        </div>
-        <h3 class="empty-title">${isMessagesView ? '没有最近聊天' : '没有联系人'}</h3>
-        <p class="empty-description">
-            ${isMessagesView ? '开始与联系人聊天，对话将显示在这里' : '添加联系人开始聊天或等待好友请求'}
-        </p>
-        ${!isMessagesView ? '<button class="empty-action" id="addContactBtn">添加联系人</button>' : ''}
-    `;
+
+    if (isSearch) {
+        emptyState.innerHTML = `
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3 class="empty-title">${customMessage || '没有找到匹配的联系人'}</h3>
+        `;
+    } else {
+        emptyState.innerHTML = `
+            <div class="empty-icon">
+                <i class="fas ${isMessagesView ? 'fa-solid fa-comments' : 'fa-user-friends'}"></i>
+            </div>
+            <h3 class="empty-title">${isMessagesView ? '没有最近聊天' : '没有联系人'}</h3>
+            <p class="empty-description">
+                ${isMessagesView ? '开始与联系人聊天，对话将显示在这里' : '添加联系人开始聊天或等待好友请求'}
+            </p>
+            ${!isMessagesView ? '<button class="empty-action" id="addContactBtn">添加联系人</button>' : ''}
+        `;
+    }
+
     DOM.contactList.appendChild(emptyState);
 
-    if (!isMessagesView) {
-        document.getElementById('addContactBtn').addEventListener('click', () => alert('打开添加联系人界面'));
+    if (!isMessagesView && !isSearch) {
+        document.getElementById('addContactBtn')?.addEventListener('click', () => alert('打开添加联系人界面'));
     }
 }
 
@@ -250,19 +283,19 @@ async function openChat(contactId) {
 
     // 如果没有消息记录，先请求后端创建一个会话
     if (!messages[contactId]) {
+        // console.log(contactId)
         try {
             const response = await fetch('/api/addMsgSession', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(contactId)
+                body: JSON.stringify({friendId: contactId})
             });
 
             if (!response.ok) throw new Error('创建会话失败');
 
             const data = await response.json();
-            console.log('新会话创建成功，sessionId:', data.sessionId);
 
             // 创建一条初始化消息（比如“开始新的对话”）
             messages[contactId] = [{
@@ -398,7 +431,7 @@ function moveContactToTop(id) {
 }
 
 /**
- * 更新单个联系人项的UI
+ * 更新单个联系人项的 UI
  * @param {Object} contact - 联系人对象
  */
 function updateSingleContactItem(contact) {
@@ -454,7 +487,8 @@ function getRandomText(type = 'reply') {
  * @param {Array} sessionsData - 会话数据数组
  */
 function processSessionsData(sessionsData) {
-    console.log(JSON.stringify(sessionsData));
+
+    // console.log(JSON.stringify(sessionsData));
     // 遍历每个会话对象
     sessionsData.forEach(session => {
 
@@ -464,8 +498,16 @@ function processSessionsData(sessionsData) {
 
         // 2.
         messages[id] = messages[id] || [];
-        messages[id].push({ sender: friend.friendName, content: session.lastMsg, time: getCurrentTime(), self: false });
+        messages[id].push(
+            {
+                sessionId:session.sessionId,
+                sender: friend.friendName,
+                content: session.lastMsg,
+                time: getCurrentTime(),
+                self: false
+            });
 
+        console.log(messages[id]);
         const contact = contacts.find(c => c.id == id);
         if (contact) {
             contact.lastMsg = session.lastMsg;
@@ -499,19 +541,64 @@ function bindEventListeners() {
 
     // 右键菜单项
     DOM.contextPin.addEventListener('click', pinContact);
-    DOM.contextClear.addEventListener('click', clearChatHistory);
-    DOM.contextDelete.addEventListener('click', removeFromRecent);
+    DOM.contextClear.addEventListener('click', clearChatHistoryAndRemoveFromMsgList);
 }
 
 
 /**
  * 搜索联系人
  */
-function searchContacts() {
-    const term = this.value.toLowerCase();
-    const filtered = contacts.filter(c => c.name.toLowerCase().includes(term) || c.lastMsg.toLowerCase().includes(term));
-    renderContactList(filtered);
+async function searchContacts() {
+    const username = this.value.trim();
+    if (!username) {
+        renderContactList();
+        return;
+    }
+
+    const term = username.toLowerCase();
+    const filtered = contacts.filter(c =>
+        c.name.toLowerCase().includes(term) ||
+        c.id.toString().includes(term)
+    );
+
+    if (filtered.length > 0) {
+        renderContactList(filtered);
+        return;
+    }
+
+    try {
+        DOM.contactList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                <div class="empty-title">搜索中...</div>
+            </div>
+        `;
+
+        const user = await searchUserById(username);
+        if (user) {
+            renderContactList([{
+                id: user.userId,
+                name: user.username,
+                avatar: user.username.charAt(0),
+                lastMsg: "点击添加为联系人",
+                time: "",
+                isSearchResult: true
+            }]);
+
+            // 添加点击添加好友逻辑
+            const resultItem = document.querySelector('.contact-item');
+            if (resultItem) {
+                resultItem.addEventListener('click', () => addNewContact(user));
+            }
+        } else {
+            renderEmptyState(true, `没有找到用户 "${username}"`);
+        }
+    } catch (error) {
+        console.error('搜索用户失败:', error);
+        renderEmptyState(true, '搜索失败，请稍后重试');
+    }
 }
+
 
 /**
  * 在移动端展开搜索框
@@ -614,38 +701,120 @@ function pinContact() {
 }
 
 /**
- * 清空聊天记录
+ * 清空聊天记录并从最近列表移除（删除会话）
  */
-function clearChatHistory() {
-    if (messages[currentContextContactId]) {
-        messages[currentContextContactId] = [];
+async function clearChatHistoryAndRemoveFromMsgList() {
+    if (!currentContextContactId) return;
+    try {
+        // 获取当前联系人的 sessionId
+        const contactMessages = messages[currentContextContactId];
+        if (!contactMessages || contactMessages.length === 0) return;
+
+        // 从第一条消息中获取sessionId
+        const sessionId = contactMessages[0].sessionId;
+
+
+        // 调用API删除会话
+        const response = await fetch('/api/deleteMsgSession', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({currentSessionId:sessionId}),
+        });
+
+        if (!response.ok) {
+            throw new Error('删除会话失败');
+        }
+
+        // 从前端移除该会话
+        delete messages[currentContextContactId];
+
+        // 更新联系人列表
+        const contact = contacts.find(c => c.id == currentContextContactId);
+        if (contact) {
+            contact.lastMsg = "";
+            contact.time = getCurrentTime();
+        }
+
+        // 重新渲染列表
+        renderRecentChats();
+
+        // 如果当前正在查看这个聊天，关闭它
+        if (currentChatId === currentContextContactId) {
+            currentChatId = null;
+            DOM.chatTitle.textContent = "选择联系人";
+            DOM.messageArea.innerHTML = "";
+        }
+
+    } catch (error) {
+        console.error('删除会话失败:', error);
+        alert('删除会话失败，请稍后重试');
+    } finally {
+        hideContextMenu();
     }
-    if (currentChatId == currentContextContactId) {
-        renderMessages(currentChatId);
-    }
-    hideContextMenu();
 }
 
 /**
- * 删除最近聊天（不会删好友，只是从最近列表移除）
+ * 搜索用户 - 向后端发送请求查询用户
+ * @param {string} username - 要搜索的用户名
+ * @returns {Promise<Object|null>} 返回用户信息或null
  */
-function removeFromRecent() {
-    if (messages[currentContextContactId]) {
-        delete messages[currentContextContactId];
+async function searchUserById(username) {
+    try {
+        const response = await fetch(`/api/searchUserByUserName?username=${encodeURIComponent(username)}`);
+        if (!response.ok) throw new Error('搜索失败');
+        const data = await response.json();
+        return data || null;
+    } catch (error) {
+        console.error('搜索用户失败:', error);
+        return null;
+    }
+}
+
+/**
+ * 添加新联系人
+ * @param {Object} user - 用户信息
+ */
+async function addNewContact(user) {
+    const addButton = document.querySelector('.contact-item');
+    if (addButton) {
+        addButton.classList.add('loading');
+        addButton.style.pointerEvents = 'none';
     }
 
-    const contact = contacts.find(c => c.id == currentContextContactId);
-    if (contact) {
-        contact.lastMsg = "新联系人";
-        contact.time = getCurrentTime();
-    }
+    try {
+        const response = await fetch('/api/addFriend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ friendId: user.userId })
+        });
 
-    const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
-    if (isMessagesView) {
-        renderRecentChats();
-    } else {
+        if (!response.ok) throw new Error('添加联系人失败');
+
+        const newContact = {
+            id: user.userId,
+            name: user.username,
+            avatar: user.username.charAt(0),
+            lastMsg: "新联系人",
+            time: getCurrentTime(),
+            pinned: false
+        };
+        contacts.unshift(newContact);
+
+        showToast('添加成功！', 'success');
+
+        DOM.searchInput.value = '';
         renderContactList();
-    }
+        openChat(user.userId); // 自动跳转聊天
 
-    hideContextMenu();
+    } catch (error) {
+        console.error('添加联系人失败:', error);
+        showToast('添加联系人失败，请稍后重试', 'error');
+    } finally {
+        if (addButton) {
+            addButton.classList.remove('loading');
+            addButton.style.pointerEvents = '';
+        }
+    }
 }

@@ -27,6 +27,6 @@ public interface MsgSessionMapper {
     // 删除会话
     Integer deleteSession(Integer sessionId);
 
-    //删除对应的记录
-    Integer deleteSessionItem(Integer sessionId, Integer itemId);
+    // 删除对应的记录
+    Integer deleteSessionItem(Integer sessionId);
 }

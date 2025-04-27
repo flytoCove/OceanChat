@@ -1,6 +1,7 @@
 package com.fly.webchat.controller;
 
 import com.fly.webchat.model.UserInfo;
+import com.fly.webchat.service.FriendService;
 import com.fly.webchat.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -67,4 +68,15 @@ public class UserController {
     public ResponseEntity<UserInfo> getUserInfo(HttpServletRequest request) {
         return userService.getUserInfo(request);
     }
+
+
+    //查询用户
+    @RequestMapping("/searchUserByUserName")
+    public ResponseEntity<UserInfo> searchUserByUserName(String username,HttpServletRequest request) {
+        if(username == null) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        return userService.searchUserByUserName(username,request);
+    }
+
 }
