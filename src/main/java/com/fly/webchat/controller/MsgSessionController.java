@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -30,8 +28,9 @@ public class MsgSessionController {
 
     @RequestMapping("/addMsgSession")
     // @SessionAttribute("user") UserInfo user
-    public ResponseEntity<Map<String,Object>> addMsgSession(Integer toUserId, HttpServletRequest request){
+    public ResponseEntity<Map<String,Object>> addMsgSession(@RequestBody Integer toUserId, HttpServletRequest request){
         //toUserId表示将哪个好友和当前登录的用户添加到一个会话列表
+        log.info("toUserId = {}",toUserId);
         return msgSessionService.addMsgSession(toUserId, request);
     }
 }

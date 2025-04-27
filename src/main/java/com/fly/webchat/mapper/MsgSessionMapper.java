@@ -21,6 +21,12 @@ public interface MsgSessionMapper {
     // 1.新增一个会话记录
     Integer addSession(MsgSession msgSession);
 
-    // 2.在 msg_session_user 增加相应的纪律
+    // 2.在 msg_session_user 增加相应的记录
     Integer addSessionItem(MsgSessionItem msgSessionItem);
+
+    // 删除会话
+    Integer deleteSession(Integer sessionId);
+
+    //删除对应的记录
+    Integer deleteSessionItem(Integer sessionId, Integer itemId);
 }

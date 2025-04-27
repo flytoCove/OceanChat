@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +63,8 @@ public class MsgSessionService {
         return new ResponseEntity<>(msgSessionList, HttpStatus.OK);
     }
 
+    // toUserId 表示将哪个好友和当前登录的用户添加到一个会话列表
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Map<String,Object>> addMsgSession(Integer toUserId, HttpServletRequest request){
         HttpSession session = request.getSession();
         if(session == null){
@@ -67,6 +72,7 @@ public class MsgSessionService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("success", false, "message", "fail : username not logged in"));
         }
+
         UserInfo user = (UserInfo) session.getAttribute("user");
 
         if(user == null){
@@ -76,11 +82,13 @@ public class MsgSessionService {
         }
 
         Integer ret = msgSessionMapper.querySessionIsExists(toUserId);
-        if(ret > 0){
+        log.info("query session id is {}", ret);
+        if(ret != null){
             log.info("session already exists");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("success", false, "message", "fail : session already exists"));
         }
+
         // 1.msg_session 中插入数据
         MsgSession msgSession = new MsgSession();
         msgSessionMapper.addSession(msgSession);

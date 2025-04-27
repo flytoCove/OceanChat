@@ -11,6 +11,12 @@
     <insert id="addSessionItem">
         insert into msg_session_user values (#{sessionId},#{userId})
     </insert>
+    <delete id="deleteSession">
+        delete from msg_session where sessionId = #{sessionId}
+    </delete>
+    <delete id="deleteSessionItem">
+        delete from msg_session_user where sessionId = #{sessionId}
+    </delete>
 
     <select id="getSessionsIdByUserId" resultType="Integer">
         select sessionId from msg_session where sessionId in

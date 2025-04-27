@@ -1,7 +1,7 @@
 // ===== 全局变量 =====
 let currentUser = null;
-let contacts = [];
-let messages = {};
+let contacts = [];   // 联系人列表
+let messages = {};      // 储存会话
 let currentChatId = null;
 let isMobileView = window.innerWidth <= 768;
 
@@ -46,6 +46,7 @@ async function initApp() {
         const sessionsData = await sessionRes.json();
         const friendsData = await friendRes.json();
 
+        // 处理当前登录用户信息
         currentUser = {
             id: userData.id,
             username: userData.username,
@@ -53,6 +54,7 @@ async function initApp() {
         };
         updateUserInfo();
 
+        // 处理好友列表
         contacts = friendsData.map(friend => ({
             id: friend.friendId,
             name: friend.friendName,
@@ -62,26 +64,61 @@ async function initApp() {
             pinned: false
         }));
 
+        // 处理消息会话数据
         processSessionsData(sessionsData);
+
+
+
+        // 渲染最近聊天列表
         renderRecentChats();
+
+        //显示欢迎信息
         showWelcomeMessage();
+
     } catch (error) {
         console.error('初始化数据失败:', error);
         fallbackGuestUser();
     }
 }
 
-// ===== 功能函数 =====
+// ======= 功能函数 =======
+
+//  ==== 用户相关函数 ====
+/**
+ * 回退到访客模式 - 当用户数据加载失败时使用
+ * 设置当前用户为Guest，并更新UI显示
+ */
 function fallbackGuestUser() {
     currentUser = { id: 0, username: 'Guest', avatar: 'G' };
     updateUserInfo();
 }
 
+/**
+ * 更新UI显示用户信息
+ * 将当前用户信息显示在界面顶部
+ */
+function updateUserInfo() {
+    if (currentUser) {
+        DOM.userAvatar.textContent = currentUser.avatar;
+        DOM.userName.textContent = currentUser.username;
+    }
+}
+
+// === 视图控制函数 ===
+
+/**
+ * 检查视口大小，判断是否为移动端视图
+ * 更新isMobileView全局变量
+ */
 function checkViewport() {
     isMobileView = window.innerWidth <= 768;
     updateMobileView();
 }
 
+/**
+ * 根据isMobileView状态更新移动端视图
+ * 调整搜索框显示/隐藏，并重新渲染联系人列表
+ */
 function updateMobileView() {
     if (isMobileView) {
         DOM.searchInput.style.display = 'none';
@@ -92,13 +129,11 @@ function updateMobileView() {
     renderContactList();
 }
 
-function updateUserInfo() {
-    if (currentUser) {
-        DOM.userAvatar.textContent = currentUser.avatar;
-        DOM.userName.textContent = currentUser.username;
-    }
-}
 
+/**
+ * 显示欢迎消息 - 首次进入应用时显示
+ * 创建一个欢迎消息div并添加到消息区域
+ */
 function showWelcomeMessage() {
     const welcomeDiv = document.createElement('div');
     welcomeDiv.className = 'welcome-message';
@@ -117,6 +152,12 @@ function showWelcomeMessage() {
     DOM.messageArea.appendChild(welcomeDiv);
 }
 
+// ==== 联系人列表相关函数 ====
+
+/**
+ * 渲染联系人列表
+ * @param {Array} list - 要渲染的联系人数组，默认为全局contacts
+ */
 function renderContactList(list = contacts) {
     DOM.contactList.innerHTML = '';
     if (list.length === 0) {
@@ -124,11 +165,15 @@ function renderContactList(list = contacts) {
         return;
     }
 
+    // 将置顶联系人放在前面
     const pinned = list.filter(c => c.pinned);
     const normal = list.filter(c => !c.pinned);
     [...pinned, ...normal].forEach(renderContactItem);
 }
 
+/**
+ * 渲染空状态 - 当联系人列表或消息列表为空时显示
+ */
 function renderEmptyState() {
     const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
     const emptyState = document.createElement('div');
@@ -150,6 +195,10 @@ function renderEmptyState() {
     }
 }
 
+/**
+ * 渲染单个联系人项
+ * @param {Object} contact - 联系人对象
+ */
 function renderContactItem(contact) {
     const item = document.createElement('div');
     item.className = `contact-item ${contact.pinned ? 'pinned' : ''}`;
@@ -167,6 +216,10 @@ function renderContactItem(contact) {
     DOM.contactList.appendChild(item);
 }
 
+/**
+ * 渲染最近聊天列表
+ * 按最后一条消息时间排序后渲染
+ */
 function renderRecentChats() {
     const recents = contacts.filter(c => messages[c.id]?.length);
     recents.sort((a, b) => new Date(messages[b.id].slice(-1)[0].time) - new Date(messages[a.id].slice(-1)[0].time));
@@ -178,7 +231,14 @@ function renderRecentChats() {
     }, 100);
 }
 
-function openChat(contactId) {
+
+//==== 聊天相关函数 ====
+
+/**
+ * 打开与指定联系人的聊天
+ * @param {number} contactId - 联系人ID
+ */
+async function openChat(contactId) {
     document.querySelector('.app-container').classList.add('view-transition');
     DOM.showMessagesBtn.classList.add('active');
     DOM.showContactsBtn.classList.remove('active');
@@ -187,8 +247,36 @@ function openChat(contactId) {
     highlightCurrentContact();
     updateChatTitle(contactId);
 
+    // 如果没有消息记录，先请求后端创建一个会话
     if (!messages[contactId]) {
-        messages[contactId] = [{ sender: contacts.find(c => c.id == contactId).name, content: '开始新的对话', time: getCurrentTime(), self: false }];
+        // console.log(contactId)
+        try {
+            const response = await fetch('/api/addMsgSession', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(contactId)
+            });
+
+            if (!response.ok) throw new Error('创建会话失败');
+
+            const data = await response.json();
+            console.log('新会话创建成功，sessionId:', data.sessionId);
+
+            // 创建一条初始化消息（比如“开始新的对话”）
+            messages[contactId] = [{
+                sender: contacts.find(c => c.id == contactId).name,
+                content: '开始新的对话',
+                time: getCurrentTime(),
+                self: false
+            }];
+        } catch (error) {
+            console.error('打开聊天失败:', error);
+            alert('无法创建新会话，请稍后重试');
+            document.querySelector('.app-container').classList.remove('view-transition');
+            return;
+        }
     }
 
     renderRecentChats();
@@ -197,12 +285,20 @@ function openChat(contactId) {
     setTimeout(() => document.querySelector('.app-container').classList.remove('view-transition'), 300);
 }
 
+
+/**
+ * 高亮当前聊天联系人
+ */
 function highlightCurrentContact() {
     document.querySelectorAll('.contact-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.id == currentChatId);
+        item.classList.toggle('active', item.dataset.id === currentChatId);
     });
 }
 
+/**
+ * 更新聊天标题为当前联系人的名字
+ * @param {number} contactId - 联系人ID
+ */
 function updateChatTitle(contactId) {
     const contact = contacts.find(c => c.id == contactId);
     if (contact) {
@@ -210,6 +306,10 @@ function updateChatTitle(contactId) {
     }
 }
 
+/**
+ * 渲染指定联系人的消息
+ * @param {number} contactId - 联系人ID
+ */
 function renderMessages(contactId) {
     DOM.messageArea.innerHTML = '';
     DOM.messageArea.style.opacity = 0;
@@ -237,6 +337,10 @@ function renderMessages(contactId) {
     }, 10);
 }
 
+
+/**
+ * 发送消息处理函数
+ */
 function sendMessage() {
     const content = DOM.messageInput.value.trim();
     if (!content || !currentChatId) return;
@@ -256,9 +360,15 @@ function sendMessage() {
     renderMessages(currentChatId);
     DOM.messageInput.value = '';
 
+    // 模拟对方回复
     setTimeout(() => simulateReply(contact), 1000 + Math.random() * 2000);
 }
 
+
+/**
+ * 模拟对方回复
+ * @param {Object} contact - 联系人对象
+ */
 function simulateReply(contact) {
     const replyTime = getCurrentTime();
     const replyContent = getRandomText('reply');
@@ -274,6 +384,11 @@ function simulateReply(contact) {
     renderMessages(currentChatId);
 }
 
+
+/**
+ * 将指定联系人移到列表顶部
+ * @param {number} id - 联系人ID
+ */
 function moveContactToTop(id) {
     const idx = contacts.findIndex(c => c.id == id);
     if (idx > -1) {
@@ -282,6 +397,10 @@ function moveContactToTop(id) {
     }
 }
 
+/**
+ * 更新单个联系人项的UI
+ * @param {Object} contact - 联系人对象
+ */
 function updateSingleContactItem(contact) {
     const item = document.querySelector(`.contact-item[data-id="${contact.id}"]`);
     if (!item || isMobileView) return;
@@ -302,11 +421,22 @@ function updateSingleContactItem(contact) {
     }
 }
 
+
+//==== 工具函数 ====
+/**
+ * 获取当前时间，格式为HH:MM
+ * @returns {string} 格式化后的时间字符串
+ */
 function getCurrentTime() {
     const now = new Date();
     return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 }
 
+/**
+ * 获取随机文本（用于模拟回复）
+ * @param {string} type - 文本类型: 'reply'或'message'
+ * @returns {string} 随机文本
+ */
 function getRandomText(type = 'reply') {
     const texts = {
         reply: ["好的，我知道了", "谢谢你的消息", "明白了", "这个主意不错", "稍后讨论", "我考虑一下", "听起来不错", "我同意", "明天再聊", "祝好"],
@@ -316,11 +446,23 @@ function getRandomText(type = 'reply') {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
+
+//==== 数据处理函数 ====
+
+/**
+ * 处理会话数据
+ * @param {Array} sessionsData - 会话数据数组
+ */
 function processSessionsData(sessionsData) {
+    console.log(JSON.stringify(sessionsData));
+    // 遍历每个会话对象
     sessionsData.forEach(session => {
+
+        // 1.提取好友信息
         const friend = session.friendList[0];
         const id = friend.friendId;
 
+        // 2.
         messages[id] = messages[id] || [];
         messages[id].push({ sender: friend.friendName, content: session.lastMsg, time: getCurrentTime(), self: false });
 
@@ -332,28 +474,48 @@ function processSessionsData(sessionsData) {
     });
 }
 
+
+// ==== 事件处理函数 ====
+/**
+ * 绑定所有事件监听器
+ */
 function bindEventListeners() {
+    // 发送消息相关
     DOM.sendBtn.addEventListener('click', sendMessage);
-    DOM.messageInput.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
+    DOM.messageInput.addEventListener('keypress', e => e.key == 'Enter' && sendMessage());
+
+    // 搜索相关
     DOM.searchInput.addEventListener('input', searchContacts);
     DOM.searchBox.addEventListener('click', expandSearchBox);
+
+    // 导航相关
     DOM.logoutBtn.addEventListener('click', handleLogout);
     DOM.showMessagesBtn.addEventListener('click', () => { switchTab('messages'); });
     DOM.showContactsBtn.addEventListener('click', () => { switchTab('contacts'); });
+
+    // 右键菜单相关
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('click', hideContextMenu);
 
+    // 右键菜单项
     DOM.contextPin.addEventListener('click', pinContact);
     DOM.contextClear.addEventListener('click', clearChatHistory);
     DOM.contextDelete.addEventListener('click', removeFromRecent);
 }
 
+
+/**
+ * 搜索联系人
+ */
 function searchContacts() {
     const term = this.value.toLowerCase();
     const filtered = contacts.filter(c => c.name.toLowerCase().includes(term) || c.lastMsg.toLowerCase().includes(term));
     renderContactList(filtered);
 }
 
+/**
+ * 在移动端展开搜索框
+ */
 function expandSearchBox() {
     if (isMobileView) {
         DOM.searchBox.classList.add('expanded');
@@ -362,11 +524,20 @@ function expandSearchBox() {
     }
 }
 
+
+/**
+ * 处理登出操作
+ */
 function handleLogout() {
     localStorage.removeItem('authToken');
     window.location.href = '../index.html';
 }
 
+
+/**
+ * 切换标签页（消息/联系人）
+ * @param {string} tab - 要切换到的标签页: 'messages'或'contacts'
+ */
 function switchTab(tab) {
     if (tab === 'messages') {
         DOM.showMessagesBtn.classList.add('active');
@@ -379,6 +550,10 @@ function switchTab(tab) {
     }
 }
 
+/**
+ * 处理右键菜单事件
+ * @param {Event} e - 事件对象
+ */
 function handleContextMenu(e) {
     const item = e.target.closest('.contact-item');
     if (!item) return;
@@ -387,6 +562,13 @@ function handleContextMenu(e) {
     showContextMenu(e.clientX, e.clientY, item.dataset.id);
 }
 
+
+/**
+ * 显示右键菜单
+ * @param {number} x - 菜单X坐标
+ * @param {number} y - 菜单Y坐标
+ * @param {number} id - 联系人ID
+ */
 function showContextMenu(x, y, id) {
     currentContextContactId = id;
     const contact = contacts.find(c => c.id == id);
@@ -397,37 +579,73 @@ function showContextMenu(x, y, id) {
     DOM.contextMenu.style.display = 'block';
 }
 
+
+/**
+ * 隐藏右键菜单
+ */
 function hideContextMenu() {
     DOM.contextMenu.style.display = 'none';
 }
 
+
+/**
+ * 置顶/取消置顶联系人
+ */
 function pinContact() {
     const contact = contacts.find(c => c.id == currentContextContactId);
-    if (contact) {
-        contact.pinned = !contact.pinned;
+    if (!contact) return;
+
+    contact.pinned = !contact.pinned;
+
+    // 移动到列表顶部或重新排序
+    if (contact.pinned) {
+        moveContactToTop(contact.id);
+    }
+
+    // 重新渲染
+    const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
+    if (isMessagesView) {
+        renderRecentChats();
+    } else {
         renderContactList();
     }
+
     hideContextMenu();
 }
 
+/**
+ * 清空聊天记录
+ */
 function clearChatHistory() {
-    if (confirm('确定要清空与该联系人的聊天记录吗？')) {
-        delete messages[currentContextContactId];
-        if (currentChatId == currentContextContactId) {
-            DOM.messageArea.innerHTML = '';
-            DOM.chatTitle.textContent = '选择联系人开始聊天';
-        }
-        renderRecentChats();
+    if (messages[currentContextContactId]) {
+        messages[currentContextContactId] = [];
+    }
+    if (currentChatId == currentContextContactId) {
+        renderMessages(currentChatId);
     }
     hideContextMenu();
 }
 
+/**
+ * 删除最近聊天（不会删好友，只是从最近列表移除）
+ */
 function removeFromRecent() {
-    if (DOM.showMessagesBtn.classList.contains('active')) {
-        if (confirm('确定要从最近聊天中移除？')) {
-            delete messages[currentContextContactId];
-            renderRecentChats();
-        }
+    if (messages[currentContextContactId]) {
+        delete messages[currentContextContactId];
     }
+
+    const contact = contacts.find(c => c.id == currentContextContactId);
+    if (contact) {
+        contact.lastMsg = "新联系人";
+        contact.time = getCurrentTime();
+    }
+
+    const isMessagesView = DOM.showMessagesBtn.classList.contains('active');
+    if (isMessagesView) {
+        renderRecentChats();
+    } else {
+        renderContactList();
+    }
+
     hideContextMenu();
 }
