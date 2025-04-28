@@ -2,6 +2,7 @@
 let currentUser = null;
 let contacts = [];   // 联系人列表
 let messages = {};      // 储存会话
+let Msg = {};
 let currentChatId = null;
 let isMobileView = window.innerWidth <= 768;
 
@@ -60,7 +61,7 @@ async function initApp() {
             name: friend.friendName,
             avatar: friend.friendName.charAt(0),
             lastMsg: "新联系人",
-            time: getCurrentTime(),
+            time: null,
             pinned: false
         }));
 
@@ -161,7 +162,7 @@ function showWelcomeMessage() {
             <div class="message-content">
                 <div class="message-info">
                     <div class="message-sender">OceanChat</div>
-                    <div class="message-time">${getCurrentTime()}</div>
+                    <div class="message-time">${null}</div>
                 </div>
                 <div class="message-text">欢迎使用OceanChat！开始与您的联系人聊天吧。</div>
             </div>
@@ -189,9 +190,7 @@ function renderContactList(list = contacts) {
     [...pinned, ...normal].forEach(renderContactItem);
 }
 
-/**
- * 渲染空状态 - 当联系人列表或消息列表为空时显示
- */
+
 /**
  * 渲染空状态 - 当联系人列表或消息列表为空时显示
  * @param {boolean} isSearch - 是否是搜索结果
@@ -243,7 +242,7 @@ function renderContactItem(contact) {
             <div class="contact-name">${contact.name}</div>
             <div class="contact-last-msg">${contact.lastMsg}</div>
         </div>
-        <div class="contact-time">${contact.time}</div>` : ''}
+        <div class="contact-time">${null}</div>` : ''}
         ${contact.pinned ? '<i class="fas fa-thumbtack pinned-icon"></i>' : ''}
     `;
     item.addEventListener('click', () => openChat(contact.id));
@@ -281,43 +280,43 @@ async function openChat(contactId) {
     highlightCurrentContact();
     updateChatTitle(contactId);
 
-    // 如果没有消息记录，先请求后端创建一个会话
-    if (!messages[contactId]) {
-        // console.log(contactId)
-        try {
-            const response = await fetch('/api/addMsgSession', {
+    try {
+        let sessionId;
+
+        // 检查是否已存在会话
+        if (messages[contactId]?.length > 0) {
+            // 从现有消息中获取sessionId
+            sessionId = messages[contactId][0].sessionId;
+        } else {
+            // 创建新会话
+            const sessionRes = await fetch('/api/addMsgSession', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({friendId: contactId})
             });
 
-            if (!response.ok) throw new Error('创建会话失败');
+            if (!sessionRes.ok) throw new Error('创建会话失败');
+            const sessionData = await sessionRes.json();
+            sessionId = sessionData.sessionId;
 
-            const data = await response.json();
-
-            // 创建一条初始化消息（比如“开始新的对话”）
-            messages[contactId] = [{
-                sender: contacts.find(c => c.id == contactId).name,
-                content: '开始新的对话',
-                time: getCurrentTime(),
-                self: false
-            }];
-        } catch (error) {
-            console.error('打开聊天失败:', error);
-            alert('无法创建新会话，请稍后重试');
-            document.querySelector('.app-container').classList.remove('view-transition');
-            return;
+            // 初始化消息记录
+            messages[contactId] = [];
         }
+
+        // 无论是否存在会话都加载消息
+        await loadMessages(sessionId, contactId);
+
+
+        renderRecentChats();
+        renderMessages(sessionId);
+
+    } catch (error) {
+        console.error('打开聊天失败:', error);
+        showToast('无法加载会话，请稍后重试', 'error');
+    } finally {
+        document.querySelector('.app-container').classList.remove('view-transition');
     }
-
-    renderRecentChats();
-    renderMessages(contactId);
-
-    setTimeout(() => document.querySelector('.app-container').classList.remove('view-transition'), 300);
 }
-
 
 /**
  * 高亮当前聊天联系人
@@ -343,11 +342,13 @@ function updateChatTitle(contactId) {
  * 渲染指定联系人的消息
  * @param {number} contactId - 联系人ID
  */
-function renderMessages(contactId) {
+function renderMessages(sessionId) {
     DOM.messageArea.innerHTML = '';
     DOM.messageArea.style.opacity = 0;
 
-    (messages[contactId] || []).forEach((msg, idx) => {
+    console.log(Msg);
+
+    (Msg[sessionId] || []).forEach((msg, idx) => {
         const div = document.createElement('div');
         div.className = `message ${msg.self ? 'message-self' : ''}`;
         div.style.setProperty('--delay', idx);
@@ -368,53 +369,6 @@ function renderMessages(contactId) {
         DOM.messageArea.style.opacity = 1;
         DOM.messageArea.scrollTop = DOM.messageArea.scrollHeight;
     }, 10);
-}
-
-
-/**
- * 发送消息处理函数
- */
-function sendMessage() {
-    const content = DOM.messageInput.value.trim();
-    if (!content || !currentChatId) return;
-
-    const now = getCurrentTime();
-    const contact = contacts.find(c => c.id == currentChatId);
-
-    messages[currentChatId] = messages[currentChatId] || [];
-    messages[currentChatId].push({ sender: currentUser.username, content, time: now, self: true });
-
-    contact.lastMsg = content;
-    contact.time = now;
-
-    moveContactToTop(contact.id);
-    updateSingleContactItem(contact);
-
-    renderMessages(currentChatId);
-    DOM.messageInput.value = '';
-
-    // 模拟对方回复
-    setTimeout(() => simulateReply(contact), 1000 + Math.random() * 2000);
-}
-
-
-/**
- * 模拟对方回复
- * @param {Object} contact - 联系人对象
- */
-function simulateReply(contact) {
-    const replyTime = getCurrentTime();
-    const replyContent = getRandomText('reply');
-
-    messages[currentChatId].push({ sender: contact.name, content: replyContent, time: replyTime, self: false });
-
-    contact.lastMsg = replyContent;
-    contact.time = replyTime;
-
-    moveContactToTop(contact.id);
-    updateSingleContactItem(contact);
-
-    renderMessages(currentChatId);
 }
 
 
@@ -455,31 +409,6 @@ function updateSingleContactItem(contact) {
 }
 
 
-//==== 工具函数 ====
-/**
- * 获取当前时间，格式为HH:MM
- * @returns {string} 格式化后的时间字符串
- */
-function getCurrentTime() {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-}
-
-/**
- * 获取随机文本（用于模拟回复）
- * @param {string} type - 文本类型: 'reply'或'message'
- * @returns {string} 随机文本
- */
-function getRandomText(type = 'reply') {
-    const texts = {
-        reply: ["好的，我知道了", "谢谢你的消息", "明白了", "这个主意不错", "稍后讨论", "我考虑一下", "听起来不错", "我同意", "明天再聊", "祝好"],
-        message: ["你好！", "最近怎么样？", "聊聊天？", "项目如何？", "周末计划？", "查收邮件", "见面时间？", "感谢帮助", "好主意", "愉快的一天"]
-    };
-    const arr = texts[type] || texts.reply;
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
-
 //==== 数据处理函数 ====
 
 /**
@@ -487,31 +416,26 @@ function getRandomText(type = 'reply') {
  * @param {Array} sessionsData - 会话数据数组
  */
 function processSessionsData(sessionsData) {
-
-    // console.log(JSON.stringify(sessionsData));
-    // 遍历每个会话对象
     sessionsData.forEach(session => {
-
-        // 1.提取好友信息
         const friend = session.friendList[0];
-        const id = friend.friendId;
+        const contactId = friend.friendId;
 
-        // 2.
-        messages[id] = messages[id] || [];
-        messages[id].push(
-            {
-                sessionId:session.sessionId,
+        // 确保sessionId存储到消息记录
+        if (!messages[contactId]) {
+            messages[contactId] = [{
+                sessionId: session.sessionId, // 保存sessionId
                 sender: friend.friendName,
                 content: session.lastMsg,
-                time: getCurrentTime(),
+                time: null,
                 self: false
-            });
+            }];
+        }
 
-        console.log(messages[id]);
-        const contact = contacts.find(c => c.id == id);
+        // 更新联系人最后消息
+        const contact = contacts.find(c => c.id == contactId);
         if (contact) {
             contact.lastMsg = session.lastMsg;
-            contact.time = getCurrentTime();
+            contact.time = session.lastMsgTime;
         }
     });
 }
@@ -523,8 +447,8 @@ function processSessionsData(sessionsData) {
  */
 function bindEventListeners() {
     // 发送消息相关
-    DOM.sendBtn.addEventListener('click', sendMessage);
-    DOM.messageInput.addEventListener('keypress', e => e.key == 'Enter' && sendMessage());
+    // DOM.sendBtn.addEventListener('click', sendMessage);
+    // DOM.messageInput.addEventListener('keypress', e => e.key == 'Enter' && sendMessage());
 
     // 搜索相关
     DOM.searchInput.addEventListener('input', searchContacts);
@@ -734,7 +658,7 @@ async function clearChatHistoryAndRemoveFromMsgList() {
         const contact = contacts.find(c => c.id == currentContextContactId);
         if (contact) {
             contact.lastMsg = "";
-            contact.time = getCurrentTime();
+            contact.time = null;
         }
 
         // 重新渲染列表
@@ -797,7 +721,7 @@ async function addNewContact(user) {
             name: user.username,
             avatar: user.username.charAt(0),
             lastMsg: "新联系人",
-            time: getCurrentTime(),
+            time: null,
             pinned: false
         };
         contacts.unshift(newContact);
@@ -816,5 +740,44 @@ async function addNewContact(user) {
             addButton.classList.remove('loading');
             addButton.style.pointerEvents = '';
         }
+    }
+}
+//格式化时间
+function formatTime(time) {
+    if (!time) return '';
+    const date = new Date(time);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+async function loadMessages(sessionId, contactId) {
+    const lastMsgTime = Msg[contactId]?.[Msg[contactId].length-1]?.time;
+    console.log(sessionId+ "------------");
+    try {
+        const response = await fetch('/api/searchMsgBySessionId', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ "sessionId": sessionId }),
+        });
+
+        const data = await response.json(); // 解析返回的消息数组
+
+        console.log(data);
+
+        // 初始化当前聊天的消息数组
+        Msg[sessionId] = data.map(msg => ({
+            sender: msg.fromName,
+            content: msg.content,
+            time: formatTime(msg.postTime),
+            self: msg.fromName == currentUser.username  // 判断是不是自己发的
+        }));
+
+        // 渲染聊天记录
+        renderMessages(sessionId);
+
+    } catch (error) {
+        console.error('加载消息失败:', error);
+        showToast('聊天记录加载失败', 'error');
     }
 }

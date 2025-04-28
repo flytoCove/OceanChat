@@ -1,5 +1,6 @@
 package com.fly.webchat.service;
 
+import com.fly.webchat.mapper.MessageMapper;
 import com.fly.webchat.mapper.MsgSessionMapper;
 import com.fly.webchat.model.FriendInfo;
 import com.fly.webchat.model.MsgSession;
@@ -26,6 +27,8 @@ public class MsgSessionService {
     @Autowired
     private MsgSessionMapper msgSessionMapper;
 
+    @Autowired
+    private MessageMapper messageMapper;
     //会话列表
     public ResponseEntity<List<MsgSession>> getMsgSessionList(HttpServletRequest request){
         HttpSession session = request.getSession();
@@ -57,7 +60,13 @@ public class MsgSessionService {
             msgSession.setSessionId(sessionId);
             List<FriendInfo> friendInfoList = msgSessionMapper.getFriendListBySessionId(sessionId, user.getUserId());
             msgSession.setFriendList(friendInfoList);
-            msgSession.setLastMsg("Why baby why tell me");
+
+            String lastMsg = messageMapper.searchhLastMsgBySessionId(sessionId);
+            if(lastMsg == null){
+                lastMsg = "";
+            }
+            log.info("lastMsg = {}", lastMsg);
+            msgSession.setLastMsg(lastMsg);
             msgSessionList.add(msgSession);
         }
         return new ResponseEntity<>(msgSessionList, HttpStatus.OK);
