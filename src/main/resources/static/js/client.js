@@ -5,7 +5,7 @@ let messages = {};      // 储存会话
 let Msg = {};
 let currentChatId = null;
 let isMobileView = window.innerWidth <= 768;
-
+let sessionToContactMap = {}; // 会话ID到联系人ID的映射
 // ===== DOM元素 =====
 const DOM = {
     userAvatar: document.getElementById('userAvatar'),
@@ -108,7 +108,7 @@ function showToast(text, type = 'success') {
  * 设置当前用户为Guest，并更新UI显示
  */
 function fallbackGuestUser() {
-    currentUser = { id: 0, username: 'Guest', avatar: 'G' };
+    currentUser = {id: 0, username: 'Guest', avatar: 'G'};
     updateUserInfo();
 }
 
@@ -301,14 +301,23 @@ async function openChat(contactId) {
 
             // 初始化消息记录
             messages[contactId] = [];
+
+            window.location.reload();
+
         }
 
         // 无论是否存在会话都加载消息
         await loadMessages(sessionId, contactId);
 
-
         renderRecentChats();
         renderMessages(sessionId);
+
+        // 清除未读状态
+        const contactItem = document.querySelector(`.contact-item[data-id="${contactId}"]`);
+        if (contactItem) {
+            contactItem.classList.remove('unread');
+            contactItem.removeAttribute('data-unread');
+        }
 
     } catch (error) {
         console.error('打开聊天失败:', error);
@@ -346,7 +355,7 @@ function renderMessages(sessionId) {
     DOM.messageArea.innerHTML = '';
     DOM.messageArea.style.opacity = 0;
 
-    console.log(Msg);
+    // console.log(Msg);
 
     (Msg[sessionId] || []).forEach((msg, idx) => {
         const div = document.createElement('div');
@@ -416,9 +425,13 @@ function updateSingleContactItem(contact) {
  * @param {Array} sessionsData - 会话数据数组
  */
 function processSessionsData(sessionsData) {
+    sessionToContactMap = {}; // 重置映射表
     sessionsData.forEach(session => {
         const friend = session.friendList[0];
         const contactId = friend.friendId;
+
+        // 建立会话ID到联系人ID的映射
+        sessionToContactMap[session.sessionId] = contactId;
 
         // 确保sessionId存储到消息记录
         if (!messages[contactId]) {
@@ -447,8 +460,8 @@ function processSessionsData(sessionsData) {
  */
 function bindEventListeners() {
     // 发送消息相关
-    // DOM.sendBtn.addEventListener('click', sendMessage);
-    // DOM.messageInput.addEventListener('keypress', e => e.key == 'Enter' && sendMessage());
+    DOM.sendBtn.addEventListener('click', sendMessage);
+    DOM.messageInput.addEventListener('keypress', e => e.key == 'Enter' && sendMessage());
 
     // 搜索相关
     DOM.searchInput.addEventListener('input', searchContacts);
@@ -456,8 +469,12 @@ function bindEventListeners() {
 
     // 导航相关
     DOM.logoutBtn.addEventListener('click', handleLogout);
-    DOM.showMessagesBtn.addEventListener('click', () => { switchTab('messages'); });
-    DOM.showContactsBtn.addEventListener('click', () => { switchTab('contacts'); });
+    DOM.showMessagesBtn.addEventListener('click', () => {
+        switchTab('messages');
+    });
+    DOM.showContactsBtn.addEventListener('click', () => {
+        switchTab('contacts');
+    });
 
     // 右键菜单相关
     document.addEventListener('contextmenu', handleContextMenu);
@@ -468,6 +485,51 @@ function bindEventListeners() {
     DOM.contextClear.addEventListener('click', clearChatHistoryAndRemoveFromMsgList);
 }
 
+/**
+ * 发送消息
+ */
+function sendMessage() {
+    const messageText = DOM.messageInput.value.trim();
+    if (!messageText) {
+        showToast('消息不能为空', 'error');
+        return;
+    }
+
+    if (!currentChatId) {
+        showToast('请先选择联系人', 'error');
+        return;
+    }
+
+    // 获取当前会话的sessionId
+    const currentSession = messages[currentChatId];
+    if (!currentSession || currentSession.length === 0) {
+        showToast('会话尚未初始化', 'error');
+        return;
+    }
+    const sessionId = currentSession[0].sessionId;
+
+    try {
+        // 构造并发送WebSocket消息
+        const req = {
+            type: 'message',
+            sessionId: sessionId,
+            content: messageText
+        };
+
+        if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(req));
+
+            // 清空输入框
+            DOM.messageInput.value = '';
+            DOM.messageInput.focus();
+        } else {
+            throw new Error('连接已断开');
+        }
+    } catch (error) {
+        console.error('消息发送失败:', error);
+        showToast('消息发送失败，请检查网络连接', 'error');
+    }
+}
 
 /**
  * 搜索联系人
@@ -644,7 +706,7 @@ async function clearChatHistoryAndRemoveFromMsgList() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({currentSessionId:sessionId}),
+            body: JSON.stringify({currentSessionId: sessionId}),
         });
 
         if (!response.ok) {
@@ -710,8 +772,8 @@ async function addNewContact(user) {
     try {
         const response = await fetch('/api/addFriend', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ friendId: user.userId })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({friendId: user.userId})
         });
 
         if (!response.ok) throw new Error('添加联系人失败');
@@ -742,6 +804,7 @@ async function addNewContact(user) {
         }
     }
 }
+
 //格式化时间
 function formatTime(time) {
     if (!time) return '';
@@ -750,20 +813,20 @@ function formatTime(time) {
 }
 
 async function loadMessages(sessionId, contactId) {
-    const lastMsgTime = Msg[contactId]?.[Msg[contactId].length-1]?.time;
-    console.log(sessionId+ "------------");
+    const lastMsgTime = Msg[contactId]?.[Msg[contactId].length - 1]?.time;
+    // console.log(sessionId + "------------");
     try {
         const response = await fetch('/api/searchMsgBySessionId', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "sessionId": sessionId }),
+            body: JSON.stringify({"sessionId": sessionId}),
         });
 
         const data = await response.json(); // 解析返回的消息数组
 
-        console.log(data);
+        // console.log(data);
 
         // 初始化当前聊天的消息数组
         Msg[sessionId] = data.map(msg => ({
@@ -781,3 +844,101 @@ async function loadMessages(sessionId, contactId) {
         showToast('聊天记录加载失败', 'error');
     }
 }
+
+/**
+ * websocket连接
+ */
+// ===== WebSocket 重连机制整合版 =====
+let socket = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+
+function initWebSocket() {
+    const ws = new WebSocket('ws://localhost:8080/message');
+
+    ws.onopen = () => {
+        console.log('WebSocket 连接成功');
+        reconnectAttempts = 0;
+    };
+
+    ws.onmessage = handleSocketMessage;
+
+    ws.onclose = () => {
+        console.warn('WebSocket 已关闭，尝试重连...');
+        attemptReconnect();
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket 错误:', error);
+        ws.close();
+    };
+
+    socket = ws;
+}
+
+function attemptReconnect() {
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.error('WebSocket 已达最大重连次数，停止重试');
+        showToast('WebSocket 连接失败，请刷新页面', 'error');
+        return;
+    }
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+    reconnectAttempts++;
+    console.log(`第 ${reconnectAttempts} 次重连，将在 ${delay / 1000}s 后执行...`);
+    setTimeout(() => {
+        initWebSocket();
+    }, delay);
+}
+
+function handleSocketMessage(e) {
+    try {
+        const resp = JSON.parse(e.data);
+        if (resp.type === 'message') {
+            const sessionId = resp.sessionId;
+            const contactId = sessionToContactMap[sessionId];
+
+            if (!contactId) {
+                console.warn('收到未知会话的消息:', sessionId);
+                return;
+            }
+
+            const newMessage = {
+                sessionId: resp.sessionId,
+                sender: resp.fromName,
+                content: resp.content,
+                time: formatTime(resp.postTime || new Date()),
+                self: resp.fromName == currentUser.username
+            };
+
+            if (!Msg[sessionId]) Msg[sessionId] = [];
+            Msg[sessionId].push(newMessage);
+
+            const contact = contacts.find(c => c.id === contactId);
+            if (contact) {
+                contact.lastMsg = newMessage.content;
+                contact.time = newMessage.time;
+                updateSingleContactItem(contact);
+                if (DOM.showMessagesBtn.classList.contains('active')) {
+                    renderRecentChats();
+                }
+            }
+
+            if (currentChatId === contactId) {
+                renderMessages(sessionId);
+                DOM.messageArea.scrollTop = DOM.messageArea.scrollHeight;
+            } else {
+                const contactItem = document.querySelector(`.contact-item[data-id="${contactId}"]`);
+                if (contactItem) {
+                    contactItem.classList.add('unread');
+                    contactItem.setAttribute('data-unread',
+                        (parseInt(contactItem.getAttribute('data-unread')) || 0) + 1);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('消息处理失败:', error);
+    }
+}
+
+// 启动 WebSocket
+initWebSocket();

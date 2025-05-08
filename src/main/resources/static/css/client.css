@@ -749,3 +749,36 @@ body {
     font-size: 12px;
     color: #666;
 }
+
+
+/* 在CSS中添加移动端手势支持 */
+@media (max-width: 768px) {
+    .contact-item {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .swipe-actions {
+        position: absolute;
+        right: -100px;
+        top: 0;
+        height: 100%;
+        display: flex;
+        transition: right 0.3s;
+    }
+
+    .swipe-action {
+        width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .delete-action { background: #ff4757; }
+    .pin-action { background: #2ed573; }
+
+    .swiping .swipe-actions {
+        right: 0;
+    }
+}

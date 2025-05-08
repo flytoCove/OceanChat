@@ -12,4 +12,6 @@ public interface MessageMapper {
 
     //这里我指定只返回前100条消息记录
     List<Message> searchMsgBySessionId(Integer sessionId);
+
+    Integer addMessage(Message message);
 }

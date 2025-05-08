@@ -1,15 +1,13 @@
-package com.fly.webchat.model;
+package com.fly.webchat.controller;
 
 import lombok.Data;
 
-import java.util.Date;
-
+//表示一个消息的响应
 @Data
-public class Message {
-    private Integer messageId;
+public class MessageResponse {
+    private String type = "message";
     private Integer fromId;
     private String fromName;
     private Integer sessionId;
     private String content;
-    private Date postTime;
 }

@@ -5,16 +5,44 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7599f733-2480-41bd-bfa7-a37d22ca360d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/MessageController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/mapper/MessageMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/model/Message.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/service/MessageService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../mapper/MessageMapper.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/component/OnlineUserManage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/config/WebSocketConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/MessageRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/MessageResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/controller/WebSocketHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/html/TestWebSocket.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../java/com/fly/webchat/service/MsgSessionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../java/com/fly/webchat/service/MsgSessionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html/client.html" beforeDir="false" afterPath="$PROJECT_DIR$/html/client.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/client.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/client.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/client.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/MsgSessionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/MsgSessionService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/application.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/WebChatApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/controller/FriendController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/controller/MsgSessionController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/controller/UserController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/mapper/FriendInfoMapper.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/mapper/MsgSessionMapper.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/mapper/UserInfoMapper.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/FriendInfo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/MsgSession.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/MsgSessionItem.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/model/UserInfo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/FriendService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/MsgSessionService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/com/fly/webchat/service/UserService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/mapper/FriendMapper.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/mapper/MsgSessionMapper.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/mapper/UserMapper.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/css/client.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/css/login.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/html/client.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/js/client.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/classes/static/js/login.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/WebChatApplicationTests.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/mapper/FriendInfoMapperTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/mapper/MsgSessionMapperTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../target/test-classes/com/fly/webchat/service/UserServiceTest.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,10 +59,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../../.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="2wLDVNvKnKXnqQRHFswxeWz60JD" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="1" id="Add" />
@@ -46,6 +74,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Node.js.client.js.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
@@ -72,7 +101,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1743143942262</updated>
-      <workItem from="1745811985186" duration="5894000" />
+      <workItem from="1745811985186" duration="26334000" />
+      <workItem from="1746674640781" duration="13682000" />
     </task>
     <servers />
   </component>

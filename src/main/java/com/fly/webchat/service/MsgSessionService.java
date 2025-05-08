@@ -141,6 +141,7 @@ public class MsgSessionService {
              return ResponseEntity.ok().body(Map.of("success", false, "data", ret2));
          }
 
+         // 3.删除会话中的历史消息
         return ResponseEntity.ok().body(Map.of("success", true, "data", ret1));
     }
 }

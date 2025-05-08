@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { height: 300px; border: 1px solid #ccc; padding: 10px; overflow-y: scroll; }
+        #messageInput { width: 70%; padding: 8px; }
+        button { padding: 8px 15px; }
+    </style>
+</head>
+<body>
+<h1>WebSocket 测试</h1>
+
+<div id="messages"></div>
+<br>
+<input type="text" id="messageInput" placeholder="输入消息...">
+<button onclick="sendMessage()">发送</button>
+<button onclick="connectWebSocket()">连接</button>
+<button onclick="disconnectWebSocket()">断开</button>
+
+<script>
+    let socket;
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+
+    // 连接WebSocket
+    function connectWebSocket() {
+        //
+        const wsUrl = `ws://localhost:8080/test`;
+
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = function(e) {
+            appendMessage('系统: WebSocket连接已建立');
+        };
+
+        socket.onmessage = function(event) {
+            appendMessage('服务器: ' + event.data);
+        };
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                appendMessage(`系统: 连接已关闭，代码=${event.code} 原因=${event.reason}`);
+            } else {
+                appendMessage('系统: 连接意外中断');
+            }
+        };
+
+        socket.onerror = function(error) {
+            appendMessage('系统: 发生错误: ' + error.message);
+        };
+    }
+
+    // 发送消息
+    function sendMessage() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            appendMessage('系统: 请先建立WebSocket连接');
+            return;
+        }
+
+        const message = messageInput.value;
+        if (message.trim()) {
+            socket.send(message);
+            appendMessage('我: ' + message);
+            messageInput.value = '';
+        }
+    }
+
+    // 断开连接
+    function disconnectWebSocket() {
+        if (socket) {
+            socket.close();
+        }
+    }
+
+    // 在消息区域添加消息
+    function appendMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // 页面加载时自动连接（可选）
+    window.onload = connectWebSocket;
+</script>
+</body>
+</html>
